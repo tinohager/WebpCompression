@@ -42,7 +42,7 @@ jobs:
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
-        repo_name: Portalum/Portalum.Zvt
+        repo_name: tinohager/WebpCompression
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: ./publish/WebpCompression.zip
         tag: ${{ steps.get_version.outputs.tag }}
