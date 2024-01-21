@@ -124,12 +124,15 @@
             // 
             // Form1
             // 
+            AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
             Controls.Add(tableLayoutPanel1);
             Name = "Form1";
             Text = "WebP Image Compressor";
+            DragDrop += Form1_DragDrop;
+            DragEnter += Form1_DragEnter;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();

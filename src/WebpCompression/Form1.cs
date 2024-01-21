@@ -26,7 +26,11 @@ namespace WebpCompression
 
         private void buttonSelectFiles_Click(object sender, EventArgs e)
         {
-            this.openFileDialog1.ShowDialog();
+            var dialogResult = this.openFileDialog1.ShowDialog();
+            if (dialogResult != DialogResult.OK)
+            {
+                return;
+            }
 
             var images = this.openFileDialog1.FileNames;
 
@@ -64,19 +68,27 @@ namespace WebpCompression
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
-                process.WaitForExit(2000);
-                var exitCode = process.ExitCode;
+                process.WaitForExit(30000);
 
-                var originalSize = fileInfo.Length;
-                var newFileInfo = new FileInfo($"{newFileName}");
-
-                if (!newFileInfo.Exists)
+                if (process.HasExited)
                 {
-                    return;
-                }
+                    var exitCode = process.ExitCode;
 
-                var compression = Math.Round(100 - (100.0 * newFileInfo.Length / originalSize));
-                imageInfo.CompressionInfo = $"-{compression}%";
+                    var originalSize = fileInfo.Length;
+                    var newFileInfo = new FileInfo($"{newFileName}");
+
+                    if (!newFileInfo.Exists)
+                    {
+                        return;
+                    }
+
+                    var compression = Math.Round(100 - (100.0 * newFileInfo.Length / originalSize));
+                    imageInfo.CompressionInfo = $"-{compression}%";
+                }
+                else
+                {
+                    MessageBox.Show("cwebp timeout");
+                }
 
                 process.ErrorDataReceived -= this.Process_OutputDataReceived;
                 process.OutputDataReceived -= this.Process_OutputDataReceived;
@@ -98,6 +110,23 @@ namespace WebpCompression
 
                 this.textBoxLog.Text += $"{e.Data.Trim()}\r\n";
             });
+        }
+
+        private void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            var paths = new List<string>();
+
+            foreach (string path in (string[])e.Data.GetData(DataFormats.FileDrop))
+            {
+                paths.Add(path);
+            }
+
+            this.dataGridView1.DataSource = paths.Select(o => new ImageInfo { Name = o }).ToArray();
+        }
+
+        private void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Copy;
         }
     }
 }
