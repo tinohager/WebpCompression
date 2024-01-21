@@ -4,7 +4,7 @@ namespace WebpCompression
 {
     public partial class Form1 : Form
     {
-        private string _processPath;
+        private readonly string _processPath;
 
         public Form1()
         {
