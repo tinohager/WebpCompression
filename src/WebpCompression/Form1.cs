@@ -39,6 +39,8 @@ namespace WebpCompression
 
         private void buttonOptimize_Click(object sender, EventArgs e)
         {
+            var imageSizes = new int[] { 2560, 1920, 1080 };
+
             var imageInfos = this.dataGridView1.DataSource as ImageInfo[];
             if (imageInfos == null)
             {
@@ -47,51 +49,55 @@ namespace WebpCompression
 
             foreach (var imageInfo in imageInfos)
             {
-                var fileInfo = new FileInfo(imageInfo.Name);
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageInfo.Name);
-                var newFileName = $"{fileNameWithoutExtension}.webp";
-
-                var processStartInfo = new ProcessStartInfo
+                foreach (var imageSize in imageSizes)
                 {
-                    FileName = this._processPath,
-                    Arguments = $"\"{imageInfo.Name}\" -o \"{newFileName}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
 
-                using var process = new Process();
-                process.StartInfo = processStartInfo;
-                process.OutputDataReceived += this.Process_OutputDataReceived;
-                process.ErrorDataReceived += this.Process_OutputDataReceived;
+                    var fileInfo = new FileInfo(imageInfo.Name);
+                    var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imageInfo.Name);
+                    var newFileName = $"{fileNameWithoutExtension}-{imageSize}.webp";
 
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit(30000);
-
-                if (process.HasExited)
-                {
-                    var exitCode = process.ExitCode;
-
-                    var originalSize = fileInfo.Length;
-                    var newFileInfo = new FileInfo($"{newFileName}");
-
-                    if (!newFileInfo.Exists)
+                    var processStartInfo = new ProcessStartInfo
                     {
-                        return;
+                        FileName = this._processPath,
+                        Arguments = $"\"{imageInfo.Name}\" -resize {imageSize} 0 -o \"{newFileName}\"",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+
+                    using var process = new Process();
+                    process.StartInfo = processStartInfo;
+                    process.OutputDataReceived += this.Process_OutputDataReceived;
+                    process.ErrorDataReceived += this.Process_OutputDataReceived;
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    process.WaitForExit(30000);
+
+                    if (process.HasExited)
+                    {
+                        var exitCode = process.ExitCode;
+
+                        var originalSize = fileInfo.Length;
+                        var newFileInfo = new FileInfo($"{newFileName}");
+
+                        if (!newFileInfo.Exists)
+                        {
+                            return;
+                        }
+
+                        var compression = Math.Round(100 - (100.0 * newFileInfo.Length / originalSize));
+                        imageInfo.CompressionInfo = $"-{compression}%";
+                    }
+                    else
+                    {
+                        MessageBox.Show("cwebp.exe timeout");
                     }
 
-                    var compression = Math.Round(100 - (100.0 * newFileInfo.Length / originalSize));
-                    imageInfo.CompressionInfo = $"-{compression}%";
+                    process.ErrorDataReceived -= this.Process_OutputDataReceived;
+                    process.OutputDataReceived -= this.Process_OutputDataReceived;
                 }
-                else
-                {
-                    MessageBox.Show("cwebp timeout");
-                }
-
-                process.ErrorDataReceived -= this.Process_OutputDataReceived;
-                process.OutputDataReceived -= this.Process_OutputDataReceived;
             }
 
             //this.dataGridView1.DataSource = null;
